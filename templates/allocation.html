@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Allocation</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+</head>
+<body>
+
+<div class="sidebar">
+
+<h3><i class="fa-solid fa-calendar-days"></i> Optimizer</h3>
+
+<a href="/dashboard"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+<a href="/faculty-page"><i class="fa-solid fa-user-tie"></i> Faculty</a>
+<a href="/rooms-page"><i class="fa-solid fa-door-open"></i> Rooms</a>
+<a href="/subjects-page"><i class="fa-solid fa-book"></i> Subjects</a>
+<a href="/classes-page"><i class="fa-solid fa-users"></i> Classes</a>
+<a href="/allocation-page"><i class="fa-solid fa-list-check"></i> Allocation</a>
+<a href="/timetable-page"><i class="fa-solid fa-table"></i> Generate Timetable</a>
+
+</div>
+
+<div class="main">
+
+<h3 class="mb-4">Class Allocation</h3>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+    {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+{% endwith %}
+
+<div class="card p-3 mb-4">
+
+<form method="POST" action="/add-allocation">
+
+<div class="row g-3">
+
+<div class="col-md-2">
+<select name="faculty_id" class="form-control" required>
+<option value="">Faculty</option>
+{% for f in faculty %}
+<option value="{{ f[0] }}">{{ f[1] }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="col-md-2">
+<select name="subject_id" class="form-control" required>
+<option value="">Subject</option>
+{% for s in subjects %}
+<option value="{{ s[0] }}">{{ s[1] }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="col-md-2">
+<select name="room_id" class="form-control" required>
+<option value="">Room</option>
+{% for r in rooms %}
+<option value="{{ r[0] }}">{{ r[1] }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="col-md-2">
+<select name="class_id" class="form-control" required>
+<option value="">Class</option>
+{% for c in classes %}
+<option value="{{ c[0] }}">{{ c[1] }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="col-md-2">
+<select name="timeslot_id" class="form-control" required>
+<option value="">Timeslot</option>
+{% for t in timeslots %}
+<option value="{{ t[0] }}">{{ t[1] }} - {{ t[2] }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="col-md-2">
+<select name="day" class="form-control" required>
+<option>Monday</option>
+<option>Tuesday</option>
+<option>Wednesday</option>
+<option>Thursday</option>
+<option>Friday</option>
+</select>
+</div>
+
+<div class="col-md-2">
+<button type="submit" class="btn btn-success w-100">Allocate</button>
+</div>
+
+</div>
+
+</form>
+
+</div>
+
+<table class="table table-bordered bg-white text-center">
+
+<thead class="table-dark">
+<tr>
+<th>ID</th>
+<th>Faculty</th>
+<th>Subject</th>
+<th>Room</th>
+<th>Class</th>
+<th>Time</th>
+<th>Day</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody>
+{% for a in allocations %}
+<tr>
+<td>{{ loop.index }}</td>
+<td>{{ a[1] }}</td>
+<td>{{ a[2] }}</td>
+<td>{{ a[3] }}</td>
+<td>{{ a[6] }}</td>
+<td>{{ a[4] }} - {{ a[5] }}</td>
+<td>{{ a[7] }}</td>
+
+<td>
+    <button class="btn btn-warning btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#editAllocationModal{{ a[0] }}">
+        <i class="fa-solid fa-pen"></i>
+    </button>
+
+<a class="btn btn-danger btn-sm"
+   data-bs-toggle="modal"
+   data-bs-target="#deleteAllocationModal{{ a[0] }}">
+    <i class="fa-solid fa-trash"></i>
+</a>
+</td>
+</tr>
+
+<div class="modal fade" id="deleteAllocationModal{{ a[0] }}" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Delete Allocation</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        Are you sure you want to delete this allocation?
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+
+        <a href="/delete-allocation/{{ a[0] }}" class="btn btn-danger">
+          Delete
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="editAllocationModal{{ a[0] }}" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <form method="POST" action="/update-allocation">
+
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Allocation</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+
+          <input type="hidden" name="allocation_id" value="{{ a[0] }}">
+
+          <div class="mb-2">
+            <label>Day</label>
+            <input type="text" name="day" class="form-control" value="{{ a[7] }}">
+          </div>
+
+          <div class="mb-2">
+            <label>Faculty</label>
+            <select name="faculty_id" class="form-control">
+              {% for f in faculty %}
+              <option value="{{ f[0] }}">{{ f[1] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-2">
+            <label>Subject</label>
+            <select name="subject_id" class="form-control">
+              {% for s in subjects %}
+              <option value="{{ s[0] }}">{{ s[1] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-2">
+            <label>Room</label>
+            <select name="room_id" class="form-control">
+              {% for r in rooms %}
+              <option value="{{ r[0] }}">{{ r[1] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-2">
+            <label>Class</label>
+            <select name="class_id" class="form-control">
+              {% for c in classes %}
+              <option value="{{ c[0] }}">{{ c[1] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-2">
+            <label>Timeslot</label>
+            <select name="timeslot_id" class="form-control">
+              {% for t in timeslots %}
+              <option value="{{ t[0] }}">{{ t[1] }} - {{ t[2] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Update</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+{% endfor %}
+</tbody>
+
+</table>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
